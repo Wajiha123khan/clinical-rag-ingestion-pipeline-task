@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+env/
+
+# Data files (bohot bari hoti hain, repo mein nahi jani chahiye)
+rag/medical_rag/data/*.pkl
+rag/medical_rag/data/*.csv
+
+# Environment secrets
+.env
+*.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes (agar koi local bind mount ho)
+*.log

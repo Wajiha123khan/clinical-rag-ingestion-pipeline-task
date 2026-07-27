@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  temporal-postgresql:
+    image: postgres:13
+    container_name: temporal-postgresql
+    environment: # Ye environment variables container ke andar jaake set ho jate hain
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+    volumes:
+      - temporal-postgres-data:/var/lib/postgresql/data # Postgres apna data isi path pe save karta hai, aur humne isko permanent banaya taake container delete hone pe bhi data safe rahe).
+
+  temporal:
+    image: temporalio/auto-setup:1.29.1
+    container_name: temporal
+    depends_on:
+      - temporal-postgresql # "Pehle temporal-postgresql service ko start karo, uske baad hi ye (temporal) start karna."
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=temporal-postgresql #database kaha hai, uska address do
+    ports:
+      - "7233:7233"
+
+  temporal-admin-tools:
+    image: temporalio/admin-tools:1.29.1-tctl-1.18.4-cli-1.5.0
+    container_name: temporal-admin-tools
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    stdin_open: true # exec commad type kr sakte hain container ko use krke db ka : Container ko "input lene ke liye khula
+    tty: true
+
+  temporal-ui:
+    image: temporalio/ui:2.34.0
+    container_name: temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+    ports:
+      - "8080:8080"
+
+  pgvector-db:
+    image: pgvector/pgvector:pg16
+    container_name: pgvector-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: clinical_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgvector-data:/var/lib/postgresql/data
+
+  worker:
+    build: .
+    container_name: medical-rag-worker
+    depends_on:
+      - temporal
+      - pgvector-db
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - PG_HOST=pgvector-db
+      - PG_PORT=5432
+      - PYTHONUNBUFFERED=1
+
+volumes:
+  temporal-postgres-data:
+  pgvector-data:

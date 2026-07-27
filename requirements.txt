@@ -1,0 +1,7 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+temporalio
+pandas
+langchain-text-splitters
+sentence-transformers
+psycopg2-binary
+torch
